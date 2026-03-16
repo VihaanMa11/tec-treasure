@@ -12,18 +12,11 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const TEAMS = [
-  { name: 'Team Alpha',   email: 'alpha@hunt.local',   password: 'Alpha2024!' },
-  { name: 'Team Beta',    email: 'beta@hunt.local',    password: 'Beta2024!' },
-  { name: 'Team Gamma',   email: 'gamma@hunt.local',   password: 'Gamma2024!' },
-  { name: 'Team Delta',   email: 'delta@hunt.local',   password: 'Delta2024!' },
-  { name: 'Team Epsilon', email: 'epsilon@hunt.local', password: 'Epsilon2024!' },
-  { name: 'Team Zeta',    email: 'zeta@hunt.local',    password: 'Zeta2024!' },
-  { name: 'Team Eta',     email: 'eta@hunt.local',     password: 'Eta2024!' },
-  { name: 'Team Theta',   email: 'theta@hunt.local',   password: 'Theta2024!' },
-  { name: 'Team Iota',    email: 'iota@hunt.local',    password: 'Iota2024!' },
-  { name: 'Team Kappa',   email: 'kappa@hunt.local',   password: 'Kappa2024!' },
-]
+const TEAMS = Array.from({ length: 10 }, (_, i) => ({
+  name: `Team ${i + 1}`,
+  email: `team${i + 1}@tech`,
+  password: 'tech@123',
+}))
 
 const ADMIN = {
   name: 'Admin',
