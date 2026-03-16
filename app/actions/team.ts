@@ -10,9 +10,9 @@ export type Question = {
   option_b: string
   option_c: string
   option_d: string
-  hint_1: string | null
-  hint_2: string | null
-  hint_3: string | null
+  hint_1: string
+  hint_2: string
+  hint_3: string
 }
 
 export type DashboardData =
@@ -75,6 +75,17 @@ export async function submitAnswer(
 
   if (!question || question.team_id !== user.id) throw new Error('Invalid question')
 
+  // Guard against replaying old question submissions
+  const { data: progress } = await adminSupabase
+    .from('team_progress')
+    .select('current_question_index')
+    .eq('team_id', user.id)
+    .single()
+
+  if (!progress || progress.current_question_index !== question.order_index) {
+    throw new Error('Question is not current')
+  }
+
   const isCorrect = question.correct_option === selectedOption
 
   await adminSupabase.from('attempts').insert({
@@ -110,6 +121,18 @@ export async function requestHint(
   if (!user) throw new Error('Unauthorized')
 
   const adminSupabase = createAdminClient()
+
+  // Validate sequential ordering
+  const { count: existingCount } = await adminSupabase
+    .from('hint_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('team_id', user.id)
+    .eq('question_id', questionId)
+
+  if (hintNumber !== (existingCount ?? 0) + 1) {
+    throw new Error('Invalid hint number')
+  }
+
   const { error } = await adminSupabase.from('hint_requests').insert({
     team_id: user.id,
     question_id: questionId,

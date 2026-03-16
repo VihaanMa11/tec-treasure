@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition, useCallback } from 'react'
 import { submitAnswer, getProvidedHints } from '@/app/actions/team'
 import { isFrozen, getFreezeRemainingMs, setFreeze } from '@/lib/utils/freeze'
 import { createClient } from '@/lib/supabase/client'
@@ -64,10 +64,10 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
     return () => { supabase.removeChannel(channel) }
   }, [teamId, question])
 
-  function handleFreezeExpired() {
+  const handleFreezeExpired = useCallback(() => {
     setFrozen(false)
     setFreezeMs(0)
-  }
+  }, [])
 
   function handleSubmit() {
     if (!selectedOption || !question || isPending || frozen) return

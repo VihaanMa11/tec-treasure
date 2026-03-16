@@ -10,7 +10,7 @@ export default function FreezeOverlay({ remainingMs, onExpired }: FreezeOverlayP
   const [ms, setMs] = useState(remainingMs)
 
   useEffect(() => {
-    if (ms <= 0) { onExpired(); return }
+    if (remainingMs <= 0) { onExpired(); return }
     const interval = setInterval(() => {
       setMs(prev => {
         if (prev <= 1000) { onExpired(); return 0 }
@@ -18,7 +18,7 @@ export default function FreezeOverlay({ remainingMs, onExpired }: FreezeOverlayP
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [ms, onExpired])
+  }, [remainingMs, onExpired])
 
   const totalSeconds = Math.ceil(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0')

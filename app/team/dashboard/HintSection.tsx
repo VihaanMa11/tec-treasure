@@ -6,7 +6,7 @@ interface HintSectionProps {
   questionId: string
   hintsUsed: number
   providedHintNumbers: number[]
-  hintTexts: (string | null)[]
+  hintTexts: string[]
 }
 
 export default function HintSection({
