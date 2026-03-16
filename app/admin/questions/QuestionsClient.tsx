@@ -10,14 +10,15 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
   const [loaded, setLoaded] = useState(false)
   const [editing, setEditing] = useState<number | null>(null)
   const [form, setForm] = useState<Partial<TeamQuestion>>({})
-  const [isPending, startTransition] = useTransition()
+  const [isLoading, startLoadTransition] = useTransition()
+  const [isSaving, startSaveTransition] = useTransition()
   const [saved, setSaved] = useState<number | null>(null)
 
   function loadTeam(teamId: string) {
     setSelectedTeamId(teamId)
     setLoaded(false)
     setEditing(null)
-    startTransition(async () => {
+    startLoadTransition(async () => {
       const qs = await getTeamQuestions(teamId)
       setQuestions(qs)
       setLoaded(true)
@@ -31,7 +32,7 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
 
   function saveQuestion() {
     if (!form || editing === null) return
-    startTransition(async () => {
+    startSaveTransition(async () => {
       await upsertQuestion({
         teamId: selectedTeamId,
         orderIndex: editing,
@@ -89,9 +90,10 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
         {!loaded && selectedTeamId && (
           <button
             onClick={() => loadTeam(selectedTeamId)}
+            disabled={isLoading}
             className="px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white text-sm rounded-xl transition-colors"
           >
-            Load Questions
+            {isLoading ? 'Loading...' : 'Load Questions'}
           </button>
         )}
       </div>
@@ -157,10 +159,10 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={saveQuestion}
-                      disabled={isPending}
+                      disabled={isSaving}
                       className="px-5 py-2 bg-brand-blue hover:bg-blue-700 text-white text-sm rounded-xl transition-colors disabled:opacity-50"
                     >
-                      {isPending ? 'Saving...' : 'Save Question'}
+                      {isSaving ? 'Saving...' : 'Save Question'}
                     </button>
                     <button
                       onClick={() => setEditing(null)}

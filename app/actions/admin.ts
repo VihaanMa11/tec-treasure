@@ -28,15 +28,20 @@ export async function getAllTeamsProgress(): Promise<TeamProgress[]> {
     .from('team_progress')
     .select('team_id, current_question_index, completed_at')
 
+  const progressMap = new Map((progress ?? []).map(p => [p.team_id, p]))
+
   return users
     .filter(u => u.user_metadata?.role === 'team')
-    .map(u => ({
-      id: u.id,
-      teamName: u.user_metadata?.team_name ?? u.email ?? 'Unknown',
-      email: u.email ?? '',
-      currentIndex: progress?.find(p => p.team_id === u.id)?.current_question_index ?? 1,
-      completedAt: progress?.find(p => p.team_id === u.id)?.completed_at ?? null,
-    }))
+    .map(u => {
+      const prog = progressMap.get(u.id)
+      return {
+        id: u.id,
+        teamName: u.user_metadata?.team_name ?? u.email ?? 'Unknown',
+        email: u.email ?? '',
+        currentIndex: prog?.current_question_index ?? 1,
+        completedAt: prog?.completed_at ?? null,
+      }
+    })
     .sort((a, b) => a.teamName.localeCompare(b.teamName))
 }
 
@@ -140,21 +145,34 @@ export async function getPendingHints(): Promise<HintRequest[]> {
 export async function markHintProvided(hintRequestId: string): Promise<void> {
   await verifyAdmin()
   const admin = createAdminClient()
-  await admin
+  const { error } = await admin
     .from('hint_requests')
     .update({ provided_at: new Date().toISOString() })
     .eq('id', hintRequestId)
+  if (error) throw error
 }
 
 export async function resetTeamProgress(teamId: string): Promise<void> {
   await verifyAdmin()
   const admin = createAdminClient()
-  await admin.from('attempts').delete().eq('team_id', teamId)
-  await admin.from('hint_requests').delete().eq('team_id', teamId)
-  await admin
+
+  // Validate that teamId belongs to a team-role user
+  const { data: { user: targetUser } } = await admin.auth.admin.getUserById(teamId)
+  if (!targetUser || targetUser.user_metadata?.role !== 'team') {
+    throw new Error('Target user is not a team')
+  }
+
+  const { error: attemptsError } = await admin.from('attempts').delete().eq('team_id', teamId)
+  if (attemptsError) throw attemptsError
+
+  const { error: hintsError } = await admin.from('hint_requests').delete().eq('team_id', teamId)
+  if (hintsError) throw hintsError
+
+  const { error: progressError } = await admin
     .from('team_progress')
     .update({ current_question_index: 1, completed_at: null })
     .eq('team_id', teamId)
+  if (progressError) throw progressError
 }
 
 export async function getAllTeamUsers() {

@@ -1,29 +1,32 @@
 'use client'
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getPendingHints, markHintProvided, type HintRequest } from '@/app/actions/admin'
 import { createClient } from '@/lib/supabase/client'
 
 export default function HintsClient({ initialHints }: { initialHints: HintRequest[] }) {
   const [hints, setHints] = useState(initialHints)
-  const [isPending, startTransition] = useTransition()
+  const [providingIds, setProvidingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
       .channel('admin_hint_requests')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'hint_requests' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hint_requests' }, () => {
         getPendingHints().then(setHints)
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  function handleProvide(id: string) {
-    startTransition(async () => {
+  async function handleProvide(id: string) {
+    setProvidingIds(prev => new Set(prev).add(id))
+    try {
       await markHintProvided(id)
       const updated = await getPendingHints()
       setHints(updated)
-    })
+    } finally {
+      setProvidingIds(prev => { const s = new Set(prev); s.delete(id); return s })
+    }
   }
 
   return (
@@ -64,10 +67,10 @@ export default function HintsClient({ initialHints }: { initialHints: HintReques
               </div>
               <button
                 onClick={() => handleProvide(h.id)}
-                disabled={isPending}
+                disabled={providingIds.has(h.id)}
                 className="px-5 py-2 bg-brand-gold hover:bg-amber-600 text-black font-semibold text-sm rounded-xl transition-colors disabled:opacity-50"
               >
-                Mark Provided
+                {providingIds.has(h.id) ? 'Providing...' : 'Mark Provided'}
               </button>
             </div>
           ))}
