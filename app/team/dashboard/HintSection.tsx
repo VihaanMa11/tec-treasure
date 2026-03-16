@@ -18,9 +18,13 @@ export default function HintSection({
   function handleRequestHint() {
     if (localHintsUsed >= 3) return
     const nextHint = localHintsUsed + 1
+    setLocalHintsUsed(nextHint) // optimistic update
     startTransition(async () => {
-      await requestHint(questionId, nextHint)
-      setLocalHintsUsed(nextHint)
+      try {
+        await requestHint(questionId, nextHint)
+      } catch {
+        setLocalHintsUsed(localHintsUsed) // rollback on error
+      }
     })
   }
 

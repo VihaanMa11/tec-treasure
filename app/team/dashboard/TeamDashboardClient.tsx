@@ -19,7 +19,8 @@ const LABELS = ['A', 'B', 'C', 'D']
 
 export default function TeamDashboardClient({ initialData, teamName, teamId }: Props) {
   const router = useRouter()
-  const [data] = useState(initialData)
+  // initialData comes fresh from server on each router.refresh() remount
+  const data = initialData
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [result, setResult] = useState<{ correct: boolean; clue: string } | null>(null)
   const [frozen, setFrozen] = useState(false)
