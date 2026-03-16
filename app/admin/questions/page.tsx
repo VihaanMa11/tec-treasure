@@ -1,4 +1,4 @@
-import { getAllTeamUsers, getTeamQuestions } from '@/app/actions/admin'
+import { getAllTeamUsers } from '@/app/actions/admin'
 import QuestionsClient from './QuestionsClient'
 
 export default async function QuestionsPage() {
