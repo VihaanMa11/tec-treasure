@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { DashboardData } from '@/app/actions/team'
 import FreezeOverlay from './FreezeOverlay'
 import HintSection from './HintSection'
+import UnlockModal from './UnlockModal'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -27,6 +28,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
   const [freezeMs, setFreezeMs] = useState(0)
   const [providedHints, setProvidedHints] = useState<number[]>([])
   const [isPending, startTransition] = useTransition()
+  const [showUnlock, setShowUnlock] = useState(false)
 
   const question = data.status === 'active' ? data.question : null
 
@@ -112,6 +114,17 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
   }
 
   function handleNextQuestion() {
+    if (data.status === 'active' && data.questionIndex < 10) {
+      setShowUnlock(true)
+    } else {
+      setResult(null)
+      setSelectedOption(null)
+      router.refresh()
+    }
+  }
+
+  function handleUnlockSuccess() {
+    setShowUnlock(false)
     setResult(null)
     setSelectedOption(null)
     router.refresh()
@@ -158,6 +171,12 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
 
   return (
     <div className="min-h-screen bg-brand-bg">
+      {showUnlock && question && (
+        <UnlockModal
+          questionId={question.id}
+          onSuccess={handleUnlockSuccess}
+        />
+      )}
       {frozen && <FreezeOverlay remainingMs={freezeMs} onExpired={handleFreezeExpired} />}
 
       <header className="border-b border-brand-blue/20 bg-brand-surface/80 backdrop-blur-sm sticky top-0 z-10">
