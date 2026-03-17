@@ -179,12 +179,13 @@ export async function unlockQuestion(
   if (questionError) throw questionError
   if (!question || question.team_id !== user.id) throw new Error('Invalid question')
 
-  const { data: progress } = await adminSupabase
+  const { data: progress, error: progressError } = await adminSupabase
     .from('team_progress')
     .select('current_question_index')
     .eq('team_id', user.id)
     .single()
 
+  if (progressError) throw progressError
   if (!progress || progress.current_question_index !== question.order_index) {
     throw new Error('Question is not current')
   }
