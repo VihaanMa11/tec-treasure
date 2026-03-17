@@ -160,3 +160,25 @@ export async function getProvidedHints(questionId: string): Promise<number[]> {
 
   return (data ?? []).map((r: { hint_number: number }) => r.hint_number)
 }
+
+export async function unlockQuestion(
+  questionId: string,
+  password: string
+): Promise<{ success: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const adminSupabase = createAdminClient()
+  const { data: question } = await adminSupabase
+    .from('questions')
+    .select('unlock_password, team_id, order_index')
+    .eq('id', questionId)
+    .single()
+
+  if (!question || question.team_id !== user.id) throw new Error('Invalid question')
+  // Q1 never has a gate — always allow
+  if (question.order_index === 1) return { success: true }
+
+  return { success: question.unlock_password === password }
+}
