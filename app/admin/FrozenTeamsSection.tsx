@@ -1,12 +1,17 @@
 'use client'
 import { useState, useEffect, useTransition } from 'react'
 import { getFrozenTeams, revokeFreeze, type FrozenTeam } from '@/app/actions/admin'
+import { createClient } from '@/lib/supabase/client'
 
 const FREEZE_MS = 15 * 60 * 1000
 
 function useCountdown(frozenSince: string) {
   const elapsed = Date.now() - new Date(frozenSince).getTime()
   const [ms, setMs] = useState(Math.max(0, FREEZE_MS - elapsed))
+
+  useEffect(() => {
+    setMs(Math.max(0, FREEZE_MS - (Date.now() - new Date(frozenSince).getTime())))
+  }, [frozenSince])
 
   useEffect(() => {
     if (ms <= 0) return
@@ -67,8 +72,39 @@ export default function FrozenTeamsSection() {
 
   useEffect(() => {
     refresh()
-    const interval = setInterval(refresh, 15000) // re-poll every 15s
-    return () => clearInterval(interval)
+
+    const supabase = createClient()
+
+    // Trigger refresh when a new wrong attempt comes in
+    const attemptsChannel = supabase
+      .channel('admin_frozen_attempts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'attempts',
+      }, (payload) => {
+        if (payload.new && (payload.new as { is_correct: boolean }).is_correct === false) {
+          refresh()
+        }
+      })
+      .subscribe()
+
+    // Trigger refresh when a freeze is revoked
+    const overridesChannel = supabase
+      .channel('admin_frozen_overrides')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'freeze_overrides',
+      }, () => {
+        refresh()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(attemptsChannel)
+      supabase.removeChannel(overridesChannel)
+    }
   }, [])
 
   if (frozenTeams.length === 0) return null

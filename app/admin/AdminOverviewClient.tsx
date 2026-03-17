@@ -21,14 +21,25 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
 
   useEffect(() => {
     const supabase = createClient()
-    const channel = supabase
-      .channel('admin_team_progress')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_progress' }, () => {
-        getAllTeamsProgress().then(setTeams)
-      })
+
+    function refetch() { getAllTeamsProgress().then(setTeams) }
+
+    // team_progress changes when a team advances to the next question
+    const progressChannel = supabase
+      .channel('admin_overview_progress')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_progress' }, refetch)
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // attempts changes when a team submits an answer (correct or wrong)
+    const attemptsChannel = supabase
+      .channel('admin_overview_attempts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attempts' }, refetch)
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(progressChannel)
+      supabase.removeChannel(attemptsChannel)
+    }
   }, [])
 
   const completed = teams.filter(t => t.completedAt).length
