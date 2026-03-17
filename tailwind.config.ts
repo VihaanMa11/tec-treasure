@@ -25,6 +25,7 @@ const config: Config = {
       animation: {
         'pulse-red': 'pulseRed 1.5s ease-in-out infinite',
         glow: 'glow 2s ease-in-out infinite',
+        shake: 'shake 0.5s ease-in-out',
       },
       keyframes: {
         pulseRed: {
@@ -34,6 +35,11 @@ const config: Config = {
         glow: {
           '0%, 100%': { boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)' },
           '50%': { boxShadow: '0 0 25px rgba(59, 130, 246, 0.6)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%, 60%': { transform: 'translateX(-8px)' },
+          '40%, 80%': { transform: 'translateX(8px)' },
         },
       },
     },
