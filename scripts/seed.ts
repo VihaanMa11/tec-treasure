@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import * as dotenv from 'dotenv'
+import { resolve } from 'path'
+dotenv.config({ path: resolve(process.cwd(), '.env.local') })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -20,8 +23,8 @@ const TEAMS = Array.from({ length: 10 }, (_, i) => ({
 
 const ADMIN = {
   name: 'Admin',
-  email: 'admin@hunt.local',
-  password: 'Admin2024!Secret',
+  email: 'admin@tech',
+  password: 'admin@123',
 }
 
 async function createUser(email: string, password: string, metadata: Record<string, string>) {

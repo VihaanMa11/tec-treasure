@@ -28,7 +28,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
   const [providedHints, setProvidedHints] = useState<number[]>([])
   const [isPending, startTransition] = useTransition()
 
-  const question = data.completed ? null : data.question
+  const question = data.status === 'active' ? data.question : null
 
   useEffect(() => {
     if (!question) return
@@ -93,7 +93,19 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
     router.refresh()
   }
 
-  if (data.completed) {
+  if (data.status === 'waiting') {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-6xl mb-6 animate-pulse">⏳</div>
+          <h1 className="text-3xl font-bold text-white mb-2">Waiting for Admin</h1>
+          <p className="text-gray-400">Questions are being set up. Hang tight!</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (data.status === 'completed') {
     return (
       <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
         <div className="text-center">
@@ -122,7 +134,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div className="text-center">
             <span className="text-xs text-gray-500 uppercase tracking-widest">Progress</span>
             <p className="text-brand-blue-light font-bold">
-              Question {data.questionIndex} <span className="text-gray-600">/ 10</span>
+              Question {data.status === 'active' ? data.questionIndex : 1} <span className="text-gray-600">/ 10</span>
             </p>
           </div>
           <button
@@ -141,7 +153,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div className="h-1 bg-brand-card rounded-full">
             <div
               className="h-1 bg-brand-blue rounded-full transition-all duration-500"
-              style={{ width: `${((data.questionIndex - 1) / 10) * 100}%` }}
+              style={{ width: `${data.status === 'active' ? ((data.questionIndex - 1) / 10) * 100 : 0}%` }}
             />
           </div>
         </div>
@@ -158,7 +170,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
                 {result.clue}
               </p>
             </div>
-            {data.questionIndex < 10 ? (
+            {(data.status === 'active' && data.questionIndex < 10) ? (
               <button
                 onClick={handleNextQuestion}
                 className="px-8 py-3 bg-brand-blue hover:bg-blue-700 text-white font-semibold rounded-xl transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
@@ -178,7 +190,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div>
             <div className="mb-8 p-8 bg-brand-surface border border-brand-blue/20 rounded-2xl card-glow">
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">
-                Question {data.questionIndex} of 10
+                Question {data.status === 'active' ? data.questionIndex : ''} of 10
               </p>
               <p className="text-xl text-white leading-relaxed font-medium">
                 {question.question_text}
@@ -215,7 +227,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
 
             <HintSection
               questionId={question.id}
-              hintsUsed={data.hintsUsed}
+              hintsUsed={data.status === 'active' ? data.hintsUsed : 0}
               providedHintNumbers={providedHints}
               hintTexts={[question.hint_1, question.hint_2, question.hint_3]}
             />

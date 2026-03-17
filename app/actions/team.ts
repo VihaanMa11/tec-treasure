@@ -16,8 +16,12 @@ export type Question = {
 }
 
 export type DashboardData =
-  | { completed: true; question: null; questionIndex: null; hintsUsed: null }
-  | { completed: false; question: Question; questionIndex: number; hintsUsed: number }
+  | { status: 'waiting' }
+  | { status: 'completed' }
+  | { status: 'active'; question: Question; questionIndex: number; hintsUsed: number }
+
+// Legacy aliases so existing client code keeps compiling
+export type DashboardDataLegacy = DashboardData & { completed?: boolean; question?: Question | null; questionIndex?: number | null; hintsUsed?: number | null }
 
 export async function getCurrentQuestion(): Promise<DashboardData> {
   const supabase = await createClient()
@@ -30,9 +34,8 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
     .eq('team_id', user.id)
     .single()
 
-  if (!progress || progress.completed_at) {
-    return { completed: true, question: null, questionIndex: null, hintsUsed: null }
-  }
+  if (!progress) return { status: 'waiting' }
+  if (progress.completed_at) return { status: 'completed' }
 
   const { data: question } = await supabase
     .from('questions')
@@ -41,7 +44,7 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
     .eq('order_index', progress.current_question_index)
     .single()
 
-  if (!question) throw new Error('Question not found')
+  if (!question) return { status: 'waiting' }
 
   const { count: hintsUsed } = await supabase
     .from('hint_requests')
@@ -50,7 +53,7 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
     .eq('question_id', question.id)
 
   return {
-    completed: false,
+    status: 'active',
     question: question as Question,
     questionIndex: progress.current_question_index,
     hintsUsed: hintsUsed ?? 0,

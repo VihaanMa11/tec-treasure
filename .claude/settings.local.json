@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(node -e \"require\\(''''@testing-library/jest-dom''''\\)\")",
+      "Bash(node -e \"const v = require\\(''/c/Users/vihaa/Desktop/tec_tresure/node_modules/vitest/package.json''\\); console.log\\(v.version\\)\")",
+      "Bash(node -e \"const v = require\\(''./node_modules/vitest/package.json''\\); console.log\\(v.version\\)\")",
+      "Bash(node -e \"const v = require\\(''./node_modules/jsdom/package.json''\\); console.log\\(v.version\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node --experimental-vm-modules node_modules/.bin/vitest run lib/utils/__tests__/freeze.test.ts)",
+      "Bash(node -e \"const p = require\\(''./node_modules/@testing-library/jest-dom/package.json''\\); console.log\\(JSON.stringify\\(p.exports, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\(''./node_modules/vitest/dist/index.js''\\); console.log\\(Object.keys\\(p\\).slice\\(0,20\\)\\)\")",
+      "Bash(node -e \"const p = require\\(''./node_modules/vitest/dist/index.js''\\); const e = p.expect; console.log\\(''expect:'', typeof e\\); console.log\\(''expect.config:'', e ? e.config : ''N/A''\\)\")",
+      "Bash(1 --debug)",
+      "Bash(git checkout:*)",
+      "Read(//c/Users/vihaa/.claude/projects/c--Users-vihaa-Desktop-tec-tresure/0f84a073-7f5f-44e0-93a0-0d287b5c0b34/tool-results/**)",
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh --version)"
+    ]
+  }
+}
