@@ -13,23 +13,39 @@ export default function UnlockModal({ questionId, onSuccess }: Props) {
   const [shake, setShake] = useState(false)
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current)
+    }
   }, [])
 
   function handleSubmit() {
     if (!password.trim() || isPending) return
     setError(false)
     startTransition(async () => {
-      const res = await unlockQuestion(questionId, password.trim())
-      if (res.success) {
-        onSuccess()
-      } else {
+      try {
+        const res = await unlockQuestion(questionId, password.trim())
+        if (res.success) {
+          onSuccess()
+        } else {
+          setPassword('')
+          setError(true)
+          setShake(true)
+          if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current)
+          shakeTimerRef.current = setTimeout(() => setShake(false), 500)
+        }
+      } catch {
         setPassword('')
         setError(true)
         setShake(true)
-        setTimeout(() => setShake(false), 500)
+        if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current)
+        shakeTimerRef.current = setTimeout(() => setShake(false), 500)
       }
     })
   }
@@ -48,7 +64,7 @@ export default function UnlockModal({ questionId, onSuccess }: Props) {
         </p>
         <input
           ref={inputRef}
-          type="text"
+          type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
