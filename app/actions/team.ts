@@ -99,12 +99,12 @@ export async function submitAnswer(
   })
 
   if (isCorrect) {
-    const isLastQuestion = question.order_index === 10
+    const isLastQuestion = question.order_index === 5
     await adminSupabase
       .from('team_progress')
       .update(
         isLastQuestion
-          ? { current_question_index: 11, completed_at: new Date().toISOString() }
+          ? { current_question_index: 6, completed_at: new Date().toISOString() }
           : { current_question_index: question.order_index + 1 }
       )
       .eq('team_id', user.id)

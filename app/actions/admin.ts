@@ -66,7 +66,7 @@ export async function getTeamQuestions(teamId: string): Promise<TeamQuestion[]> 
     .eq('team_id', teamId)
     .order('order_index')
 
-  return Array.from({ length: 10 }, (_, i) => {
+  return Array.from({ length: 5 }, (_, i) => {
     const existing = data?.find(q => q.order_index === i + 1)
     return existing ?? {
       id: null,

@@ -1,11 +1,11 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Questions table (one row per team per question, 10 per team)
+-- Questions table (one row per team per question, 5 per team)
 CREATE TABLE public.questions (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   team_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-  order_index int NOT NULL CHECK (order_index BETWEEN 1 AND 10),
+  order_index int NOT NULL CHECK (order_index BETWEEN 1 AND 5),
   question_text text NOT NULL DEFAULT '',
   option_a text NOT NULL DEFAULT '',
   option_b text NOT NULL DEFAULT '',

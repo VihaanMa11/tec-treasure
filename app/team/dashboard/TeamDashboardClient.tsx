@@ -114,7 +114,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
   }
 
   function handleNextQuestion() {
-    if (data.status === 'active' && data.questionIndex < 10) {
+    if (data.status === 'active' && data.questionIndex < 5) {
       setShowUnlock(true)
     } else {
       setResult(null)
@@ -188,7 +188,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div className="text-center">
             <span className="text-xs text-gray-500 uppercase tracking-widest">Progress</span>
             <p className="text-brand-blue-light font-bold">
-              Question {data.status === 'active' ? data.questionIndex : 1} <span className="text-gray-600">/ 10</span>
+              Question {data.status === 'active' ? data.questionIndex : 1} <span className="text-gray-600">/ 5</span>
             </p>
           </div>
           <button
@@ -207,7 +207,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div className="h-1 bg-brand-card rounded-full">
             <div
               className="h-1 bg-brand-blue rounded-full transition-all duration-500"
-              style={{ width: `${data.status === 'active' ? ((data.questionIndex - 1) / 10) * 100 : 0}%` }}
+              style={{ width: `${data.status === 'active' ? ((data.questionIndex - 1) / 5) * 100 : 0}%` }}
             />
           </div>
         </div>
@@ -224,7 +224,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
                 {result.clue}
               </p>
             </div>
-            {(data.status === 'active' && data.questionIndex < 10) ? (
+            {(data.status === 'active' && data.questionIndex < 5) ? (
               <button
                 onClick={handleNextQuestion}
                 className="px-8 py-3 bg-brand-blue hover:bg-blue-700 text-white font-semibold rounded-xl transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
@@ -244,7 +244,7 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div>
             <div className="mb-8 p-8 bg-brand-surface border border-brand-blue/20 rounded-2xl card-glow">
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">
-                Question {data.status === 'active' ? data.questionIndex : ''} of 10
+                Question {data.status === 'active' ? data.questionIndex : ''} of 5
               </p>
               <p className="text-xl text-white leading-relaxed font-medium">
                 {question.question_text}
