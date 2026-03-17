@@ -170,13 +170,24 @@ export async function unlockQuestion(
   if (!user) throw new Error('Unauthorized')
 
   const adminSupabase = createAdminClient()
-  const { data: question } = await adminSupabase
+  const { data: question, error: questionError } = await adminSupabase
     .from('questions')
     .select('unlock_password, team_id, order_index')
     .eq('id', questionId)
     .single()
 
+  if (questionError) throw questionError
   if (!question || question.team_id !== user.id) throw new Error('Invalid question')
+
+  const { data: progress } = await adminSupabase
+    .from('team_progress')
+    .select('current_question_index')
+    .eq('team_id', user.id)
+    .single()
+
+  if (!progress || progress.current_question_index !== question.order_index) {
+    throw new Error('Question is not current')
+  }
   // Q1 never has a gate — always allow
   if (question.order_index === 1) return { success: true }
 
