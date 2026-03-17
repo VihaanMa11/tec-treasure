@@ -1,10 +1,22 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getAllTeamsProgress, type TeamProgress } from '@/app/actions/admin'
+import { getAllTeamsProgress, startAllTeams, type TeamProgress } from '@/app/actions/admin'
 
 export default function AdminOverviewClient({ initialTeams }: { initialTeams: TeamProgress[] }) {
   const [teams, setTeams] = useState(initialTeams)
+  const [isPending, startTransition] = useTransition()
+  const [started, setStarted] = useState(false)
+
+  function handleStart() {
+    if (!confirm('Start the hunt for ALL teams? This will initialise their progress.')) return
+    startTransition(async () => {
+      await startAllTeams()
+      const updated = await getAllTeamsProgress()
+      setTeams(updated)
+      setStarted(true)
+    })
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -24,13 +36,26 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
     <div>
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-white">Live Team Progress</h2>
-        <div className="flex gap-4 text-sm">
+        <div className="flex items-center gap-3 text-sm">
           <span className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full text-green-400">
             {completed} Completed
           </span>
           <span className="px-3 py-1 bg-brand-blue/10 border border-brand-blue/30 rounded-full text-brand-blue-light">
             {teams.length - completed} In Progress
           </span>
+          {started ? (
+            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium">
+              ✓ Hunt Started
+            </span>
+          ) : (
+            <button
+              onClick={handleStart}
+              disabled={isPending}
+              className="px-4 py-1.5 bg-brand-gold hover:bg-amber-600 text-black font-semibold rounded-xl transition-colors disabled:opacity-50 text-sm"
+            >
+              {isPending ? 'Starting...' : '🚀 Start Hunt'}
+            </button>
+          )}
         </div>
       </div>
 

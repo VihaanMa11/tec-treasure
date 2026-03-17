@@ -184,3 +184,21 @@ export async function getAllTeamUsers() {
     .map(u => ({ id: u.id, email: u.email ?? '', teamName: u.user_metadata?.team_name ?? '' }))
     .sort((a, b) => a.teamName.localeCompare(b.teamName))
 }
+
+export async function startAllTeams(): Promise<void> {
+  await verifyAdmin()
+  const admin = createAdminClient()
+  const { data: { users } } = await admin.auth.admin.listUsers()
+  const teamUsers = users.filter(u => u.user_metadata?.role === 'team')
+
+  const rows = teamUsers.map(u => ({
+    team_id: u.id,
+    current_question_index: 1,
+    completed_at: null,
+  }))
+
+  const { error } = await admin
+    .from('team_progress')
+    .upsert(rows, { onConflict: 'team_id' })
+  if (error) throw error
+}
