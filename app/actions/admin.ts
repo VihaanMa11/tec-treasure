@@ -202,3 +202,67 @@ export async function startAllTeams(): Promise<void> {
     .upsert(rows, { onConflict: 'team_id' })
   if (error) throw error
 }
+
+export type FrozenTeam = {
+  teamId: string
+  teamName: string
+  questionId: string
+  questionIndex: number
+  frozenSince: string // ISO timestamp of wrong attempt
+}
+
+export async function getFrozenTeams(): Promise<FrozenTeam[]> {
+  await verifyAdmin()
+  const admin = createAdminClient()
+  const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString()
+
+  const [
+    { data: wrongAttempts },
+    { data: overrides },
+    { data: progress },
+    { data: questions },
+    { data: { users } },
+  ] = await Promise.all([
+    admin.from('attempts').select('team_id, question_id, attempted_at')
+      .eq('is_correct', false).gte('attempted_at', cutoff)
+      .order('attempted_at', { ascending: false }),
+    admin.from('freeze_overrides').select('team_id, question_id, overridden_at')
+      .gte('overridden_at', cutoff),
+    admin.from('team_progress').select('team_id, current_question_index'),
+    admin.from('questions').select('id, order_index'),
+    admin.auth.admin.listUsers(),
+  ])
+
+  if (!wrongAttempts || wrongAttempts.length === 0) return []
+
+  const frozenMap = new Map<string, FrozenTeam>()
+  for (const attempt of wrongAttempts) {
+    if (frozenMap.has(attempt.team_id)) continue
+    const teamProgress = progress?.find(p => p.team_id === attempt.team_id)
+    const question = questions?.find(q => q.id === attempt.question_id)
+    if (!teamProgress || !question) continue
+    if (question.order_index !== teamProgress.current_question_index) continue
+    const override = overrides?.find(
+      o => o.team_id === attempt.team_id &&
+           o.question_id === attempt.question_id &&
+           new Date(o.overridden_at) > new Date(attempt.attempted_at)
+    )
+    if (override) continue
+    const user = users.find(u => u.id === attempt.team_id)
+    frozenMap.set(attempt.team_id, {
+      teamId: attempt.team_id,
+      teamName: user?.user_metadata?.team_name ?? 'Unknown',
+      questionId: attempt.question_id,
+      questionIndex: question.order_index,
+      frozenSince: attempt.attempted_at,
+    })
+  }
+  return Array.from(frozenMap.values())
+}
+
+export async function revokeFreeze(teamId: string, questionId: string): Promise<void> {
+  await verifyAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('freeze_overrides').insert({ team_id: teamId, question_id: questionId })
+  if (error) throw error
+}

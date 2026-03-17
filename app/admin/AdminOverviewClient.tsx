@@ -2,6 +2,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getAllTeamsProgress, startAllTeams, type TeamProgress } from '@/app/actions/admin'
+import FrozenTeamsSection from './FrozenTeamsSection'
 
 export default function AdminOverviewClient({ initialTeams }: { initialTeams: TeamProgress[] }) {
   const [teams, setTeams] = useState(initialTeams)
@@ -58,6 +59,8 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
           )}
         </div>
       </div>
+
+      <FrozenTeamsSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {teams.map(team => (

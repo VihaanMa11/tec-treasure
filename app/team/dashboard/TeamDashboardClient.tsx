@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useTransition, useCallback } from 'react'
 import { submitAnswer, getProvidedHints } from '@/app/actions/team'
-import { isFrozen, getFreezeRemainingMs, setFreeze } from '@/lib/utils/freeze'
+import { isFrozen, getFreezeRemainingMs, setFreeze, clearFreeze } from '@/lib/utils/freeze'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardData } from '@/app/actions/team'
 import FreezeOverlay from './FreezeOverlay'
@@ -62,6 +62,30 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
       )
       .subscribe()
 
+    return () => { supabase.removeChannel(channel) }
+  }, [teamId, question])
+
+  // Listen for admin freeze revocations
+  useEffect(() => {
+    if (!question) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`freeze_override_${teamId}_${question.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'freeze_overrides',
+          filter: `team_id=eq.${teamId}`,
+        },
+        () => {
+          clearFreeze(teamId, question.id)
+          setFrozen(false)
+          setFreezeMs(0)
+        }
+      )
+      .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [teamId, question])
 
