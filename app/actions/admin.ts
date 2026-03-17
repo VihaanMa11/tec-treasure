@@ -53,6 +53,7 @@ export type TeamQuestion = {
   correct_option: string
   location_clue: string
   hint_1: string; hint_2: string; hint_3: string
+  unlock_password: string
 }
 
 export async function getTeamQuestions(teamId: string): Promise<TeamQuestion[]> {
@@ -73,6 +74,7 @@ export async function getTeamQuestions(teamId: string): Promise<TeamQuestion[]> 
       question_text: '', option_a: '', option_b: '', option_c: '', option_d: '',
       correct_option: 'a', location_clue: '',
       hint_1: '', hint_2: '', hint_3: '',
+      unlock_password: '',
     }
   })
 }
@@ -82,6 +84,7 @@ export async function upsertQuestion(data: {
   questionText: string; optionA: string; optionB: string; optionC: string; optionD: string
   correctOption: string; locationClue: string
   hint1: string; hint2: string; hint3: string
+  unlockPassword: string
 }): Promise<void> {
   await verifyAdmin()
   const admin = createAdminClient()
@@ -94,6 +97,7 @@ export async function upsertQuestion(data: {
       option_c: data.optionC, option_d: data.optionD,
       correct_option: data.correctOption, location_clue: data.locationClue,
       hint_1: data.hint1, hint_2: data.hint2, hint_3: data.hint3,
+      unlock_password: data.unlockPassword,
     },
     { onConflict: 'team_id,order_index' }
   )
