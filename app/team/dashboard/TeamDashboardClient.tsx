@@ -1,11 +1,10 @@
 'use client'
 import { useState, useEffect, useTransition, useCallback } from 'react'
-import { submitAnswer, getProvidedHints } from '@/app/actions/team'
+import { submitAnswer } from '@/app/actions/team'
 import { isFrozen, getFreezeRemainingMs, setFreeze, clearFreeze } from '@/lib/utils/freeze'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardData } from '@/app/actions/team'
 import FreezeOverlay from './FreezeOverlay'
-import HintSection from './HintSection'
 import UnlockModal from './UnlockModal'
 import { useRouter } from 'next/navigation'
 
@@ -26,7 +25,6 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
   const [result, setResult] = useState<{ correct: boolean; clue: string } | null>(null)
   const [frozen, setFrozen] = useState(false)
   const [freezeMs, setFreezeMs] = useState(0)
-  const [providedHints, setProvidedHints] = useState<number[]>([])
   const [isPending, startTransition] = useTransition()
   const [showUnlock, setShowUnlock] = useState(false)
 
@@ -38,33 +36,6 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
       setFrozen(true)
       setFreezeMs(getFreezeRemainingMs(teamId, question.id))
     }
-  }, [teamId, question])
-
-  useEffect(() => {
-    if (!question) return
-    getProvidedHints(question.id).then(setProvidedHints)
-  }, [question])
-
-  useEffect(() => {
-    if (!question) return
-    const supabase = createClient()
-    const channel = supabase
-      .channel(`hints_${teamId}_${question.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'hint_requests',
-          filter: `team_id=eq.${teamId}`,
-        },
-        () => {
-          getProvidedHints(question.id).then(setProvidedHints)
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
   }, [teamId, question])
 
   // Listen for admin freeze revocations
@@ -279,12 +250,6 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
               {isPending ? 'Checking...' : 'Submit Answer'}
             </button>
 
-            <HintSection
-              questionId={question.id}
-              hintsUsed={data.status === 'active' ? data.hintsUsed : 0}
-              providedHintNumbers={providedHints}
-              hintTexts={[question.hint_1, question.hint_2, question.hint_3]}
-            />
           </div>
         )}
       </main>

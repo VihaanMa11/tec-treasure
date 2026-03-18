@@ -21,7 +21,8 @@
       "Bash(gh auth:*)",
       "Bash(gh --version)",
       "Bash(npx tsx:*)",
-      "Read(//c/Users/vihaa/.claude/plugins/cache/claude-plugins-official/superpowers/4.3.1/skills/subagent-driven-development/**)"
+      "Read(//c/Users/vihaa/.claude/plugins/cache/claude-plugins-official/superpowers/4.3.1/skills/subagent-driven-development/**)",
+      "Bash(git push:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\vihaa\\Desktop\\tec_tresure\\docs\\plans"

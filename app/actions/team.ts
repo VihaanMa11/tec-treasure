@@ -18,7 +18,7 @@ export type Question = {
 export type DashboardData =
   | { status: 'waiting' }
   | { status: 'completed' }
-  | { status: 'active'; question: Question; questionIndex: number; hintsUsed: number }
+  | { status: 'active'; question: Question; questionIndex: number }
 
 // Legacy aliases so existing client code keeps compiling
 export type DashboardDataLegacy = DashboardData & { completed?: boolean; question?: Question | null; questionIndex?: number | null; hintsUsed?: number | null }
@@ -46,17 +46,10 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
 
   if (!question) return { status: 'waiting' }
 
-  const { count: hintsUsed } = await supabase
-    .from('hint_requests')
-    .select('*', { count: 'exact', head: true })
-    .eq('team_id', user.id)
-    .eq('question_id', question.id)
-
   return {
     status: 'active',
     question: question as Question,
     questionIndex: progress.current_question_index,
-    hintsUsed: hintsUsed ?? 0,
   }
 }
 
@@ -113,52 +106,6 @@ export async function submitAnswer(
   }
 
   return { correct: false, clue: null }
-}
-
-export async function requestHint(
-  questionId: string,
-  hintNumber: number
-): Promise<{ success: boolean }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const adminSupabase = createAdminClient()
-
-  // Validate sequential ordering
-  const { count: existingCount } = await adminSupabase
-    .from('hint_requests')
-    .select('*', { count: 'exact', head: true })
-    .eq('team_id', user.id)
-    .eq('question_id', questionId)
-
-  if (hintNumber !== (existingCount ?? 0) + 1) {
-    throw new Error('Invalid hint number')
-  }
-
-  const { error } = await adminSupabase.from('hint_requests').insert({
-    team_id: user.id,
-    question_id: questionId,
-    hint_number: hintNumber,
-  })
-
-  if (error && error.code !== '23505') throw error
-  return { success: true }
-}
-
-export async function getProvidedHints(questionId: string): Promise<number[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data } = await supabase
-    .from('hint_requests')
-    .select('hint_number, provided_at')
-    .eq('team_id', user.id)
-    .eq('question_id', questionId)
-    .not('provided_at', 'is', null)
-
-  return (data ?? []).map((r: { hint_number: number }) => r.hint_number)
 }
 
 export async function unlockQuestion(

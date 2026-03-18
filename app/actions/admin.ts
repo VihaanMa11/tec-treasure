@@ -104,58 +104,6 @@ export async function upsertQuestion(data: {
   if (error) throw error
 }
 
-export type HintRequest = {
-  id: string
-  teamId: string
-  teamName: string
-  questionId: string
-  questionIndex: number
-  hintNumber: number
-  requestedAt: string
-}
-
-export async function getPendingHints(): Promise<HintRequest[]> {
-  await verifyAdmin()
-  const admin = createAdminClient()
-
-  const { data: hints } = await admin
-    .from('hint_requests')
-    .select('id, team_id, question_id, hint_number, requested_at')
-    .is('provided_at', null)
-    .order('requested_at', { ascending: true })
-
-  if (!hints || hints.length === 0) return []
-
-  const { data: { users } } = await admin.auth.admin.listUsers()
-  const { data: questions } = await admin
-    .from('questions')
-    .select('id, order_index')
-
-  return hints.map(h => {
-    const user = users.find(u => u.id === h.team_id)
-    const question = questions?.find(q => q.id === h.question_id)
-    return {
-      id: h.id,
-      teamId: h.team_id,
-      teamName: user?.user_metadata?.team_name ?? 'Unknown',
-      questionId: h.question_id,
-      questionIndex: question?.order_index ?? 0,
-      hintNumber: h.hint_number,
-      requestedAt: h.requested_at,
-    }
-  })
-}
-
-export async function markHintProvided(hintRequestId: string): Promise<void> {
-  await verifyAdmin()
-  const admin = createAdminClient()
-  const { error } = await admin
-    .from('hint_requests')
-    .update({ provided_at: new Date().toISOString() })
-    .eq('id', hintRequestId)
-  if (error) throw error
-}
-
 export async function resetTeamProgress(teamId: string): Promise<void> {
   await verifyAdmin()
   const admin = createAdminClient()
