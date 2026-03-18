@@ -17,8 +17,8 @@ export type Question = {
 
 export type DashboardData =
   | { status: 'waiting' }
-  | { status: 'completed' }
-  | { status: 'active'; question: Question; questionIndex: number }
+  | { status: 'completed'; startedAt: string; completedAt: string }
+  | { status: 'active'; question: Question; questionIndex: number; startedAt: string }
 
 // Legacy aliases so existing client code keeps compiling
 export type DashboardDataLegacy = DashboardData & { completed?: boolean; question?: Question | null; questionIndex?: number | null; hintsUsed?: number | null }
@@ -30,12 +30,16 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
 
   const { data: progress } = await supabase
     .from('team_progress')
-    .select('current_question_index, completed_at')
+    .select('current_question_index, completed_at, started_at')
     .eq('team_id', user.id)
     .single()
 
   if (!progress) return { status: 'waiting' }
-  if (progress.completed_at) return { status: 'completed' }
+  if (progress.completed_at) return {
+    status: 'completed',
+    startedAt: progress.started_at ?? new Date().toISOString(),
+    completedAt: progress.completed_at,
+  }
 
   const { data: question } = await supabase
     .from('questions')
@@ -50,6 +54,7 @@ export async function getCurrentQuestion(): Promise<DashboardData> {
     status: 'active',
     question: question as Question,
     questionIndex: progress.current_question_index,
+    startedAt: progress.started_at ?? new Date().toISOString(),
   }
 }
 
@@ -109,7 +114,6 @@ export async function submitAnswer(
 }
 
 export async function unlockQuestion(
-  questionId: string,
   password: string
 ): Promise<{ success: boolean }> {
   const supabase = await createClient()
@@ -117,27 +121,25 @@ export async function unlockQuestion(
   if (!user) throw new Error('Unauthorized')
 
   const adminSupabase = createAdminClient()
-  const { data: question, error: questionError } = await adminSupabase
-    .from('questions')
-    .select('unlock_password, team_id, order_index')
-    .eq('id', questionId)
-    .single()
 
-  if (questionError) throw questionError
-  if (!question || question.team_id !== user.id) throw new Error('Invalid question')
-
-  const { data: progress, error: progressError } = await adminSupabase
+  const { data: progress } = await adminSupabase
     .from('team_progress')
     .select('current_question_index')
     .eq('team_id', user.id)
     .single()
 
-  if (progressError) throw progressError
-  if (!progress || progress.current_question_index !== question.order_index) {
-    throw new Error('Question is not current')
-  }
-  // Q1 never has a gate — always allow
-  if (question.order_index === 1) return { success: true }
+  if (!progress) throw new Error('No progress found')
+
+  // Look up the current question by index (not by ID) so Q2+ unlock works
+  // after submitAnswer has already advanced current_question_index
+  const { data: question } = await adminSupabase
+    .from('questions')
+    .select('unlock_password')
+    .eq('team_id', user.id)
+    .eq('order_index', progress.current_question_index)
+    .single()
+
+  if (!question) throw new Error('Question not found')
 
   return { success: question.unlock_password === password }
 }

@@ -22,7 +22,9 @@
       "Bash(gh --version)",
       "Bash(npx tsx:*)",
       "Read(//c/Users/vihaa/.claude/plugins/cache/claude-plugins-official/superpowers/4.3.1/skills/subagent-driven-development/**)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(/c/Users/vihaa/Desktop/tec_tresure/supabase/add_started_at.sql:*)",
+      "Read(//c/Users/vihaa/AppData/Local/Temp/claude/c--Users-vihaa-Desktop-tec-tresure/e584f1fe-1da5-4033-bffd-9e83d0ae0187/tasks/**)"
     ],
     "additionalDirectories": [
       "c:\\Users\\vihaa\\Desktop\\tec_tresure\\docs\\plans"

@@ -1,21 +1,31 @@
 'use client'
 import { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getAllTeamsProgress, startAllTeams, type TeamProgress } from '@/app/actions/admin'
+import { getAllTeamsProgress, startAllTeams, stopAllTeams, type TeamProgress } from '@/app/actions/admin'
 import FrozenTeamsSection from './FrozenTeamsSection'
 
-export default function AdminOverviewClient({ initialTeams }: { initialTeams: TeamProgress[] }) {
+export default function AdminOverviewClient({ initialTeams, initialHuntRunning }: { initialTeams: TeamProgress[], initialHuntRunning: boolean }) {
   const [teams, setTeams] = useState(initialTeams)
   const [isPending, startTransition] = useTransition()
-  const [started, setStarted] = useState(false)
+  const [huntRunning, setHuntRunning] = useState(initialHuntRunning)
 
   function handleStart() {
-    if (!confirm('Start the hunt for ALL teams? This will initialise their progress.')) return
+    if (!confirm('Start the hunt for ALL teams?')) return
     startTransition(async () => {
       await startAllTeams()
       const updated = await getAllTeamsProgress()
       setTeams(updated)
-      setStarted(true)
+      setHuntRunning(true)
+    })
+  }
+
+  function handleStop() {
+    if (!confirm('Stop the hunt? All teams will return to the waiting screen.')) return
+    startTransition(async () => {
+      await stopAllTeams()
+      const updated = await getAllTeamsProgress()
+      setTeams(updated)
+      setHuntRunning(false)
     })
   }
 
@@ -55,10 +65,14 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
           <span className="px-3 py-1 bg-brand-blue/10 border border-brand-blue/30 rounded-full text-brand-blue-light">
             {teams.length - completed} In Progress
           </span>
-          {started ? (
-            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium">
-              ✓ Hunt Started
-            </span>
+          {huntRunning ? (
+            <button
+              onClick={handleStop}
+              disabled={isPending}
+              className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 text-sm"
+            >
+              {isPending ? 'Stopping...' : '⏹ Stop Hunt'}
+            </button>
           ) : (
             <button
               onClick={handleStart}
@@ -92,7 +106,7 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
                 <span className="text-xl">🏆</span>
               ) : (
                 <span className="text-xs text-brand-blue-light font-mono bg-brand-blue/10 px-2 py-0.5 rounded">
-                  Q{team.currentIndex}/10
+                  Q{team.currentIndex}/5
                 </span>
               )}
             </div>
@@ -103,14 +117,14 @@ export default function AdminOverviewClient({ initialTeams }: { initialTeams: Te
                   team.completedAt ? 'bg-green-500' : 'bg-brand-blue'
                 }`}
                 style={{
-                  width: `${team.completedAt ? 100 : ((team.currentIndex - 1) / 10) * 100}%`
+                  width: `${team.completedAt ? 100 : ((team.currentIndex - 1) / 5) * 100}%`
                 }}
               />
             </div>
             <p className="text-xs text-gray-600 mt-1.5">
               {team.completedAt
-                ? 'Finished!'
-                : `${team.currentIndex - 1} of 10 questions solved`}
+                ? `Finished in ${team.duration ?? '—'}`
+                : `${team.currentIndex - 1} of 5 questions solved`}
             </p>
           </div>
         ))}

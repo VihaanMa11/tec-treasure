@@ -17,6 +17,8 @@ export type TeamProgress = {
   email: string
   currentIndex: number
   completedAt: string | null
+  startedAt: string | null
+  duration: string | null
 }
 
 export async function getAllTeamsProgress(): Promise<TeamProgress[]> {
@@ -26,7 +28,7 @@ export async function getAllTeamsProgress(): Promise<TeamProgress[]> {
   const { data: { users } } = await admin.auth.admin.listUsers()
   const { data: progress } = await admin
     .from('team_progress')
-    .select('team_id, current_question_index, completed_at')
+    .select('team_id, current_question_index, completed_at, started_at')
 
   const progressMap = new Map((progress ?? []).map(p => [p.team_id, p]))
 
@@ -34,12 +36,24 @@ export async function getAllTeamsProgress(): Promise<TeamProgress[]> {
     .filter(u => u.user_metadata?.role === 'team')
     .map(u => {
       const prog = progressMap.get(u.id)
+      const startedAt = prog?.started_at ?? null
+      const completedAt = prog?.completed_at ?? null
+      let duration: string | null = null
+      if (startedAt && completedAt) {
+        const totalSecs = Math.floor((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 1000)
+        const h = Math.floor(totalSecs / 3600)
+        const m = Math.floor((totalSecs % 3600) / 60)
+        const s = totalSecs % 60
+        duration = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`
+      }
       return {
         id: u.id,
         teamName: u.user_metadata?.team_name ?? u.email ?? 'Unknown',
         email: u.email ?? '',
         currentIndex: prog?.current_question_index ?? 1,
-        completedAt: prog?.completed_at ?? null,
+        completedAt,
+        startedAt,
+        duration,
       }
     })
     .sort((a, b) => a.teamName.localeCompare(b.teamName))
@@ -143,16 +157,37 @@ export async function startAllTeams(): Promise<void> {
   const { data: { users } } = await admin.auth.admin.listUsers()
   const teamUsers = users.filter(u => u.user_metadata?.role === 'team')
 
+  const now = new Date().toISOString()
   const rows = teamUsers.map(u => ({
     team_id: u.id,
     current_question_index: 1,
     completed_at: null,
+    started_at: now,
   }))
 
   const { error } = await admin
     .from('team_progress')
     .upsert(rows, { onConflict: 'team_id' })
   if (error) throw error
+}
+
+export async function stopAllTeams(): Promise<void> {
+  await verifyAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('team_progress')
+    .delete()
+    .not('team_id', 'is', null)
+  if (error) throw error
+}
+
+export async function isHuntRunning(): Promise<boolean> {
+  await verifyAdmin()
+  const admin = createAdminClient()
+  const { count } = await admin
+    .from('team_progress')
+    .select('*', { count: 'exact', head: true })
+  return (count ?? 0) > 0
 }
 
 export type FrozenTeam = {

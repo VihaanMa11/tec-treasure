@@ -3,11 +3,10 @@ import { useState, useTransition, useRef, useEffect } from 'react'
 import { unlockQuestion } from '@/app/actions/team'
 
 interface Props {
-  questionId: string
   onSuccess: () => void
 }
 
-export default function UnlockModal({ questionId, onSuccess }: Props) {
+export default function UnlockModal({ onSuccess }: Props) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
@@ -30,7 +29,7 @@ export default function UnlockModal({ questionId, onSuccess }: Props) {
     setError(false)
     startTransition(async () => {
       try {
-        const res = await unlockQuestion(questionId, password.trim())
+        const res = await unlockQuestion(password.trim())
         if (res.success) {
           onSuccess()
         } else {
