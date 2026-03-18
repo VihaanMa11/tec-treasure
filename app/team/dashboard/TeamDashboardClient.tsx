@@ -170,9 +170,20 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
           <div className="text-8xl mb-6">🏆</div>
           <h1 className="text-4xl font-bold text-brand-gold mb-2">Hunt Complete!</h1>
           <p className="text-gray-400 mb-4">Congratulations, {teamName}! You&apos;ve found all the clues.</p>
-          <p className="text-2xl font-mono text-white font-semibold">
+          <p className="text-2xl font-mono text-white font-semibold mb-8">
             Time: <span className="text-brand-gold">{duration}</span>
           </p>
+          <button
+            type="button"
+            onClick={async () => {
+              const supabase = createClient()
+              await supabase.auth.signOut()
+              router.push('/login')
+            }}
+            className="text-sm text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 px-4 py-2 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </div>
     )
