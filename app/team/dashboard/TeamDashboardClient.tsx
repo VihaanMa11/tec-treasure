@@ -217,9 +217,9 @@ export default function TeamDashboardClient({ initialData, teamName, teamId }: P
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">
                 Question {data.status === 'active' ? data.questionIndex : ''} of 5
               </p>
-              <p className="text-xl text-white leading-relaxed font-medium">
+              <pre className="text-xl text-white leading-relaxed font-mono whitespace-pre-wrap break-words">
                 {question.question_text}
-              </p>
+              </pre>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
