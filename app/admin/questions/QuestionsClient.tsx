@@ -157,22 +157,17 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
                     {field('hint_2', 'Hint 2')}
                     {field('hint_3', 'Hint 3')}
                   </div>
-                  {/* Unlock Password — only for Q2+ */}
-                  {editing >= 2 ? (
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">
-                        Unlock Password (teams enter this to access question {editing})
-                      </label>
-                      <input
-                        value={(form.unlock_password as string) ?? ''}
-                        onChange={e => setForm(prev => ({ ...prev, unlock_password: e.target.value }))}
-                        placeholder="e.g. TREASURE2025"
-                        className="w-full px-3 py-2 bg-brand-bg border border-brand-gold/30 rounded-lg text-white text-sm focus:outline-none focus:border-brand-gold"
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-600 italic">No unlock password required for Question 1.</p>
-                  )}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Unlock Password (teams enter this to access question {editing})
+                    </label>
+                    <input
+                      value={(form.unlock_password as string) ?? ''}
+                      onChange={e => setForm(prev => ({ ...prev, unlock_password: e.target.value }))}
+                      placeholder="e.g. TREASURE2025"
+                      className="w-full px-3 py-2 bg-brand-bg border border-brand-gold/30 rounded-lg text-white text-sm focus:outline-none focus:border-brand-gold"
+                    />
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={saveQuestion}
@@ -194,7 +189,7 @@ export default function QuestionsClient({ teams }: { teams: Team[] }) {
                   <p className="text-sm text-gray-400 truncate">
                     {q.question_text || <span className="italic text-gray-600">Not set yet</span>}
                   </p>
-                  {q.order_index >= 2 && q.unlock_password && (
+                  {q.unlock_password && (
                     <p className="text-xs text-brand-gold/60">🔐 Password: {q.unlock_password}</p>
                   )}
                 </div>
