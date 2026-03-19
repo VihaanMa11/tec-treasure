@@ -23,8 +23,8 @@ const TEAMS = Array.from({ length: 10 }, (_, i) => ({
 
 const ADMIN = {
   name: 'Admin',
-  email: 'admin@tech',
-  password: 'admin@123',
+  email: 'vihaanmalani1106@gmail.com',
+  password: 'vihaan@1106',
 }
 
 async function createUser(email: string, password: string, metadata: Record<string, string>) {
